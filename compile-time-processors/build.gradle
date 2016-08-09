@@ -5,5 +5,6 @@ targetCompatibility = JavaVersion.VERSION_1_6
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'org.apache.velocity:velocity:1.7'
     compile project(':compile-time-annotations')
 }
