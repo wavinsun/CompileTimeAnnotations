@@ -7,4 +7,5 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'org.apache.velocity:velocity:1.7'
     compile project(':compile-time-annotations')
+    compile files("${System.properties['java.home']}/../lib/tools.jar")
 }

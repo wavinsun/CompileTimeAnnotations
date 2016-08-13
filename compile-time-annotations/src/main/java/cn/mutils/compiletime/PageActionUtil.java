@@ -12,7 +12,7 @@ public final class PageActionUtil {
     }
 
     public static Class<?> getPage(String action) {
-        return sPageActionMap.getPage(action);
+        return sPageActionMap != null ? sPageActionMap.getPage(action) : null;
     }
 
     public static IPageActionMap getActionMap() {
