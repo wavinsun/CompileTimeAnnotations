@@ -1,1 +1,1 @@
-include ':app', ':app-library', ':compile-time-annotations', ':compile-time-processors'
+include ':app', ':app-library', ':compile-time-annotations', ':compile-time-processors', ':compile-time-masters'

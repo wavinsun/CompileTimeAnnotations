@@ -24,6 +24,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 /**
@@ -32,6 +33,8 @@ import javax.tools.Diagnostic;
 @SupportedAnnotationTypes("cn.mutils.compiletime.PageAction")
 @SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class PageActionProcessor extends AbstractProcessor {
+
+    public static final String MASTER = PageActionProcessor.class.getPackage().getName() + ".PageActionMaster";
 
     private static final String TAG = PageActionProcessor.class.getSimpleName();
 
@@ -82,7 +85,6 @@ public class PageActionProcessor extends AbstractProcessor {
         Messager messager = processingEnv.getMessager();
         String target = getBuildTarget();
         messager.printMessage(Diagnostic.Kind.NOTE, TAG + ":" + target);
-        boolean isMaster = false;
         HashMap<String, String> actionMap = new HashMap<String, String>();
         for (Element element : roundEnv.getElementsAnnotatedWith(PageAction.class)) {
             if (element.getKind() != ElementKind.CLASS) {
@@ -90,9 +92,6 @@ public class PageActionProcessor extends AbstractProcessor {
             }
             TypeElement classElement = (TypeElement) element;
             PageAction pageAction = classElement.getAnnotation(PageAction.class);
-            if (pageAction.master()) {
-                isMaster = true;
-            }
             String action = pageAction.value();
             if (action.isEmpty()) {
                 continue;
@@ -122,6 +121,9 @@ public class PageActionProcessor extends AbstractProcessor {
                 return true;
             }
         }
+        Elements elements = processingEnv.getElementUtils();
+        TypeElement masterElement = elements.getTypeElement(MASTER);
+        boolean isMaster = masterElement != null && masterElement.getAnnotation(PageAction.class) != null;
         if (!isMaster) {
             mProcessed = true;
             return true;
@@ -130,7 +132,7 @@ public class PageActionProcessor extends AbstractProcessor {
         // Review
         ArrayList<String> dependMaps = new ArrayList<String>();
         ArrayList<Map<String, String>> projectActionMaps = new ArrayList<Map<String, String>>();
-        PackageElement pElement = processingEnv.getElementUtils().getPackageElement(pName);
+        PackageElement pElement = elements.getPackageElement(pName);
         if (pElement != null) {
             for (Element element : pElement.getEnclosedElements()) {
                 if (element.getKind() != ElementKind.CLASS) {

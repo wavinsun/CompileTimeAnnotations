@@ -9,5 +9,4 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface PageAction {
     String value() default "";
-    boolean master() default false;
 }
