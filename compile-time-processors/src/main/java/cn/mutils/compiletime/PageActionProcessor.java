@@ -1,14 +1,8 @@
 package cn.mutils.compiletime;
 
-import com.sun.tools.javac.processing.JavacProcessingEnvironment;
-import com.sun.tools.javac.util.Options;
-
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 
-import java.io.File;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +77,7 @@ public class PageActionProcessor extends AbstractProcessor {
             return true;
         }
         Messager messager = processingEnv.getMessager();
-        String target = getBuildTarget();
+        String target = ProcessorUtil.getBuildTarget(processingEnv);
         messager.printMessage(Diagnostic.Kind.NOTE, TAG + ":" + target);
         HashMap<String, String> actionMap = new HashMap<String, String>();
         for (Element element : roundEnv.getElementsAnnotatedWith(PageAction.class)) {
@@ -109,14 +103,14 @@ public class PageActionProcessor extends AbstractProcessor {
         VelocityEngine ve = new VelocityEngine();
         String pName = IPageActionMap.class.getPackage().getName() + ".impl";
         String cNameApp = IPageActionMap.class.getSimpleName().substring(1) + "Impl";
-        String cName = cNameApp + getTargetName(target);
+        String cName = cNameApp + ProcessorUtil.getTargetName(target);
         if (!actionMap.isEmpty()) {
             // Generate map code for each project
             VelocityContext vc = new VelocityContext();
             vc.put("PACKAGE_NAME", pName);
             vc.put("CLASS_NAME", cName);
             vc.put("ACTION_MAP", actionMap);
-            if (!createSourceFile(cName, ve, vc, TEMPLATE_MAP_LIBRARY)) {
+            if (!ProcessorUtil.createSourceFile(processingEnv, cName, ve, vc, TEMPLATE_MAP_LIBRARY)) {
                 mProcessed = true;
                 return true;
             }
@@ -189,72 +183,12 @@ public class PageActionProcessor extends AbstractProcessor {
         vc.put("CLASS_NAME", cNameApp);
         vc.put("DEPEND_MAPS", dependMaps);
         vc.put("INTERFACE_NAME", IPageActionMap.class.getName());
-        if (!createSourceFile(cNameApp, ve, vc, TEMPLATE_MAP_APPLICATION)) {
+        if (!ProcessorUtil.createSourceFile(processingEnv, cNameApp, ve, vc, TEMPLATE_MAP_APPLICATION)) {
             mProcessed = true;
             return true;
         }
         mProcessed = true;
         return true;
-    }
-
-    private boolean createSourceFile(String name, VelocityEngine engine, VelocityContext context, String template) {
-        Messager messager = processingEnv.getMessager();
-        StringWriter writer = new StringWriter();
-        engine.evaluate(context, writer, "", template);
-        String code = writer.toString();
-        messager.printMessage(Diagnostic.Kind.NOTE, name + ":\n" + code);
-        Writer fileWrite = null;
-        try {
-            fileWrite = processingEnv.getFiler().createSourceFile(name).openWriter();
-            fileWrite.write(code);
-            fileWrite.flush();
-            return true;
-        } catch (Exception e) {
-            messager.printMessage(Diagnostic.Kind.ERROR, TAG + ":" + e);
-            return false;
-        } finally {
-            try {
-                if (fileWrite != null) {
-                    fileWrite.close();
-                }
-            } catch (Exception ex) {
-                messager.printMessage(Diagnostic.Kind.ERROR, TAG + ":" + ex);
-            }
-        }
-    }
-
-    private String getBuildTarget() {
-        if (!(processingEnv instanceof JavacProcessingEnvironment)) {
-            return null;
-        }
-        JavacProcessingEnvironment JavacEnv = (JavacProcessingEnvironment) processingEnv;
-        String classPath = Options.instance(JavacEnv.getContext()).get("-d");
-        if (classPath == null) {
-            return null;
-        }
-        int index = classPath.lastIndexOf("build");
-        index = index == -1 ? classPath.lastIndexOf("bin") : index;
-        return index == -1 ? null : new File(classPath.substring(0, index)).getName();
-    }
-
-    private static String getTargetName(String target) {
-        StringBuilder sb = new StringBuilder();
-        boolean toUpperCase = true;
-        for (int i = 0, size = target.length(); i < size; i++) {
-            char c = target.charAt(i);
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
-                sb.append(toUpperCase ? Character.toUpperCase(c) : c);
-                toUpperCase = false;
-            } else {
-                toUpperCase = true;
-                if (i != 0) {
-                    if (c >= '0' && c <= '9') {
-                        sb.append(c);
-                    }
-                }
-            }
-        }
-        return sb.toString();
     }
 
 }
